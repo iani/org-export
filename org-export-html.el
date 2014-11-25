@@ -48,7 +48,10 @@ header. Individual blocks can be selectively evaluated using
 
 ;; css configuration
 (defvar bootstrap-url
-  "http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css")
+  "http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"
+  ;; "http://larigot.avarts.ionio.gr/users/iani/css/bootstrap.min.css"
+  ;; "./bootstrap.min.css"
+  )
 
 (defvar css-url (getopt "css"))
 (if (getopt "bootstrap")
@@ -143,6 +146,20 @@ header. Individual blocks can be selectively evaluated using
 (defvar outfile
   (file-truename
    (or (getopt "outfile") (replace-regexp-in-string "\.org$" ".html" infile))))
+
+(defun get-string-from-file (filePath)
+  "Return FILEPATH's file content."
+  (if (file-exists-p filePath)
+      (with-temp-buffer
+           (insert-file-contents filePath)
+           (concat "\n" (buffer-string) "\n"))
+    ""))
+
+(setq my-html-head
+      (concat
+       (get-string-from-file (file-truename "./config/pre-header.html"))
+       my-html-head
+       (get-string-from-file (file-truename "./config/post-header.html"))))
 
 ;; remember the current directory; find-file changes it
 (defvar cwd default-directory)
