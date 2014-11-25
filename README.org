@@ -2,11 +2,7 @@
 #+AUTHOR: Noah Hoffman / mods by iani
 #+OPTIONS: toc:nil ^:nil
 
-Test
-
 * org-export: batch export of org-mode files from the command line
-
-Test
 
 ** Overview
 
@@ -122,3 +118,7 @@ It's also easy to link to or embed alternative css stylesheets, for
 example, the ones used by the org-mode manual:
 
 : org-export html --infile README.org --css http://orgmode.org/org-manual.css --embed-css
+
+** Custom headers (added by IZ)
+
+To add a header before the css part that is added by org-export to the
