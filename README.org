@@ -121,4 +121,32 @@ example, the ones used by the org-mode manual:
 
 ** Custom headers (added by IZ)
 
-To add a header before the css part that is added by org-export to the
+You can add 2 custom pieces of html to the export, one before the css file included with -css, and one after it. These pieces must be put in a folder named "config" in the same directory as the file that is being exported.
+
+To add your own html code before the css section, put the code in a file with the following path (Note: "./config/" means that the folder is in the same directory as the file that you want to export to html with org-export):
+
+#+BEGIN_EXAMPLE
+"./config/pre-header.html"
+#+END_EXAMPLE
+
+This is useful for loading fonts, for example like this:
+
+(Typekit:)
+#+BEGIN_SRC html
+<script src="//use.typekit.net/paw4nyz.js"></script>
+<script>try{Typekit.load();}catch(e){}</script>
+#+END_SRC
+
+Or like this:
+
+(Google fonts:)
+
+#+BEGIN_SRC html
+<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+#+END_SRC
+
+To add your own html code after the css section, put the code in a file with the following path:
+
+#+BEGIN_EXAMPLE
+./config/post-header.html
+#+END_EXAMPLE
