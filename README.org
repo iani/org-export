@@ -1,5 +1,5 @@
 #+TITLE: org-export
-#+AUTHOR: Noah Hoffman
+#+AUTHOR: Noah Hoffman / mods by iani
 #+OPTIONS: toc:nil ^:nil
 
 * org-export: batch export of org-mode files from the command line
