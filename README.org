@@ -150,3 +150,14 @@ To add your own html code after the css section, put the code in a file with the
 #+BEGIN_EXAMPLE
 ./config/post-header.html
 #+END_EXAMPLE
+
+In the post-header you can add items such as a custom menu.  Note: Such parts can also be added directly in the org-mode file using an HTML block:
+
+#+BEGIN_HTML
+<nav>
+  <a href="/html/">HTML</a> |
+  <a href="/css/">CSS</a> |
+  <a href="/js/">JavaScript</a> |
+  <a href="/jquery/">jQuery</a>
+</nav>
+#+END_HTML
