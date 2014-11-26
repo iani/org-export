@@ -1,0 +1,61 @@
+* Intro
+:PROPERTIES:
+:DATE:     [2014-11-25 Tue 20:58]
+:END:
+
+This document describes additional features added by Iannis Zannos.  These are:
+
+- Ability to insert additional HTML code to the header of the file just after the css part.  This can be useful for:
+  - Adding scripts to load fonts from sites such as Google Fonts and TypeKit.
+  - Modifying parts of the css style definition (for example, customizing parts of frameworks loaded through external links such as bootstrap.min.css).
+  - Adding other html parts for the site, such as navigation (menu) elements etc.
+
+* Custom headers
+
+To add your own html code after the css section, put the code in a file with the following path:
+
+#+BEGIN_EXAMPLE
+"./config/extra-header.html"
+#+END_EXAMPLE
+
+(Note: "./config/" means that the folder is in the same directory as the file that you want to export to html with org-export):
+This is useful for loading fonts, for example like this:
+
+(Typekit:)
+#+BEGIN_SRC html
+<script src="//use.typekit.net/paw4nyz.js"></script>
+<script>try{Typekit.load();}catch(e){}</script>
+<style type="text/css" media="all">
+  body {
+  font-family: "anonymous-pro-1","anonymous-pro-2",sans-serif;
+  font-size: 1.5em;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "alverata-irregular-pe-1","alverata-irregular-pe-2",sans-serif;
+  }
+</style>
+#+END_SRC
+
+Or like this:
+
+(Google fonts:)
+
+#+BEGIN_SRC html
+<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+<style type="text/css" media="all">
+  body {
+    font-family: 'Open Sans', sans-serif;
+  }
+</style>
+#+END_SRC
+
+In the extra header you can also add items such as a custom menu.  Note: Such parts can also be added directly in the org-mode file using an HTML block:
+
+#+BEGIN_HTML
+<nav>
+  <a href="/html/">HTML</a> |
+  <a href="/css/">CSS</a> |
+  <a href="/js/">JavaScript</a> |
+  <a href="/jquery/">jQuery</a>
+</nav>
+#+END_HTML
