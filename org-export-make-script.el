@@ -98,13 +98,20 @@ Used for setting:
               (file-name-nondirectory filename))))))
 
 (defun make-and-save-export-script (&optional filename)
+  "Note: you need to run source ~/.zshrc or source ./bashrc
+in order to make the newly linked shell command available in your shell."
   (interactive "FChoose a file to make its script: ")
   (find-file (concat (file-name-sans-extension filename) ".sh"))
   (insert (make-export-script filename))
   (save-buffer)
-  (set-file-modes (buffer-file-name) #o777))
+  (set-file-modes (buffer-file-name) #o777)
+  (make-symbolic-link
+   (buffer-file-name)
+   (file-truename (concat
+                   "~/.org-export/"
+                   (file-name-nondirectory (buffer-file-name))))))
 
-(defun open-export-config-folders (&optional filename)
+(defun open-export-edit-config-folders (&optional filename)
   (interactive "FChoose a file to make its script: ")
   (setq filename (file-truename (file-name-sans-extension filename)))
   (unless (file-exists-p filename) (make-directory filename))
