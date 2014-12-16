@@ -6,6 +6,9 @@ Options to be covered with commands:
 - Create the script for the file of the current buffer.
 - Create the script for the last file that had already a script created.
 - Run the script right after creating it.
+- Run the script for the file of the current buffer.
+
+Note: To run the script the emacs shell paths list must be configured so that it can run the script!
 
 * Intro
 
