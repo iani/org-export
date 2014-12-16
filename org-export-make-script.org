@@ -1,3 +1,6 @@
+* Preamble
+
+#+BEGIN_SRC emacs-lisp
 ;;; package --- Summary
 
 ;;; Commentary:
@@ -7,12 +10,15 @@
 ;; - construct argument + path from existence of file in folder
 
 ;; Look for defaults.
+#+END_SRC
 
+* get arg from plists
+#+BEGIN_SRC emacs-lisp
 ;;; Code:
 
 (defun get-arg-from-plists (infile property default)
   "Look in files under INFILE for PROPERTY from file plist el.
-Look for the file under: 
+Look for the file under:
 ./INFILE/plist.el and ./config/plist.el.
 If no file or property is found, return nil.
 
@@ -40,13 +46,21 @@ but only data either either found in plist.el or given by DEFAULT.
        (mapcar 'file-truename
                (make-config-paths infile "plist.el"))))
     (or user-config (replace-regexp-in-string "%s" infile default))))
+#+END_SRC
 
+* Make config paths
+
+#+BEGIN_SRC emacs-lisp
 (defun make-config-paths (infile config-file)
   (setq infile (file-name-sans-extension (file-truename infile)))
   (list
    (format "%s/%s" infile config-file)
    (format "%sconfig/%s" (file-name-directory infile) config-file)))
+#+END_SRC
 
+* make command arg from file
+
+#+BEGIN_SRC emacs-lisp
 (defun make-command-arg-from-file (infile datafile foundstring defaultstring)
   "Given:
 1. the names of an input file
@@ -74,7 +88,10 @@ Used for setting:
           (file-name-nondirectory path))
          foundstring)
       defaultstring)))
+#+END_SRC
 
+* make command arg from file 2
+#+BEGIN_SRC emacs-lisp
 (defun make-command-arg-from-file (infile datafile foundstring defaultstring)
   "Given:
 1. the names of an input file
@@ -95,8 +112,10 @@ Used for setting:
         (-first 'file-exists-p
                 (make-config-paths infile datafile))
       defaultstring)))
+#+END_SRC
 
-
+* make-export-script
+#+BEGIN_SRC emacs-lisp
 (defun make-export-script (filename)
   (let* ((truename (file-truename filename))
          (basename (file-name-sans-extension truename))
@@ -118,6 +137,11 @@ Used for setting:
       filename :rsync
       (format "#rsync -avz ./%s /user@domain.org:/output/"
               (file-name-nondirectory filename))))))
+#+END_SRC
+
+* make and save export script
+
+#+BEGIN_SRC emacs-lisp
 
 (defun make-and-save-export-script (&optional filename)
   "Note: you need to run source ~/.zshrc or source ./bashrc
@@ -142,7 +166,12 @@ in order to make the newly linked shell command available in your shell."
   (setq filename (concat (file-name-directory filename) "/config"))
   (unless (file-exists-p filename) (make-directory filename))
   (dired filename))
+#+END_SRC
+
+* closing
+#+BEGIN_SRC emacs-lisp
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (provide 'org-export-make-script)
 ;;; org-export-make-script.el ends here
+#+END_SRC
