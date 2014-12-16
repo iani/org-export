@@ -1,4 +1,32 @@
-* Preamble
+* Notes - TODOs
+
+Options to be covered with commands:
+
+- Select the file to make the script using =read-file-name= interactive prompt.
+- Create the script for the file of the current buffer.
+- Create the script for the last file that had already a script created.
+- Run the script right after creating it.
+
+* Intro
+
+The code in this file produces a shell script file that can be used to export an Org mode file to html using the org-export package by Noah Hoffman (https://github.com/nhoffman/org-export).  The user can then call the shell script from the terminal in order to export the selected file to html.
+
+** Usage
+
+1. Call Emacs command: make-and-save-export-script (H-h H-s)
+   Options for calling the command:
+   1. Without prefix argument: The commands creates a script for the file of the currently active buffer in Emacs (that is the buffer which you are editing at the moment when you issue the command).
+   2. With prefix argument (C-u before calling the command): The command asks you to select the Org mode file for which it will create the script.
+2. On the terminal, call the command just created
+
+
+Details:
+
+1. The script file is named after <filename>.sh where <filename
+
+
+
+* .el file Preamble
 
 #+BEGIN_SRC emacs-lisp
 ;;; package --- Summary
@@ -142,30 +170,33 @@ Used for setting:
 * make and save export script
 
 #+BEGIN_SRC emacs-lisp
+  (defun make-and-save-export-script (&optional select-file-p)
+    "Note: you need to run source ~/.zshrc or source ./bashrc
+  in order to make the newly linked shell command available in your shell."
+    (interactive "P")
+    (let (filename
+          (if select-file-p
+              (buffer-file-name)
+            (read-file-name "Choose a file to make its script: ")))
+     (find-file (concat (file-name-sans-extension filename) ".sh"))
+     (insert (make-export-script filename))
+     (save-buffer)
+     (set-file-modes (buffer-file-name) #o777)
+     (make-symbolic-link
+      (buffer-file-name)
+      (file-truename (concat
+                      "~/.org-export/"
+                      (file-name-nondirectory (buffer-file-name)))))))
 
-(defun make-and-save-export-script (&optional filename)
-  "Note: you need to run source ~/.zshrc or source ./bashrc
-in order to make the newly linked shell command available in your shell."
-  (interactive "FChoose a file to make its script: ")
-  (find-file (concat (file-name-sans-extension filename) ".sh"))
-  (insert (make-export-script filename))
-  (save-buffer)
-  (set-file-modes (buffer-file-name) #o777)
-  (make-symbolic-link
-   (buffer-file-name)
-   (file-truename (concat
-                   "~/.org-export/"
-                   (file-name-nondirectory (buffer-file-name))))))
-
-(defun open-export-edit-config-folders (&optional filename)
-  (interactive "FChoose a file to make its script: ")
-  (setq filename (file-truename (file-name-sans-extension filename)))
-  (unless (file-exists-p filename) (make-directory filename))
-  (dired filename)
-  (split-window-vertically)
-  (setq filename (concat (file-name-directory filename) "/config"))
-  (unless (file-exists-p filename) (make-directory filename))
-  (dired filename))
+  (defun open-export-edit-config-folders (&optional filename)
+    (interactive "FChoose a file to make its script: ")
+    (setq filename (file-truename (file-name-sans-extension filename)))
+    (unless (file-exists-p filename) (make-directory filename))
+    (dired filename)
+    (split-window-vertically)
+    (setq filename (concat (file-name-directory filename) "/config"))
+    (unless (file-exists-p filename) (make-directory filename))
+    (dired filename))
 #+END_SRC
 
 * closing
