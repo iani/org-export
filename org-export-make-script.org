@@ -1,31 +1,50 @@
 * Notes - TODOs
+:PROPERTIES:
+:DATE:     <2014-12-16 Tue 16:56>
+:END:
 
 Options to be covered with commands:
 
 - Select the file to make the script using =read-file-name= interactive prompt.
 - Create the script for the file of the current buffer.
 - Create the script for the last file that had already a script created.
+
+Refrain from implementing the following:
+
 - Run the script right after creating it.
 - Run the script for the file of the current buffer.
-
-Note: To run the script the emacs shell paths list must be configured so that it can run the script!
 
 * Intro
 
 The code in this file produces a shell script file that can be used to export an Org mode file to html using the org-export package by Noah Hoffman (https://github.com/nhoffman/org-export).  The user can then call the shell script from the terminal in order to export the selected file to html.
 
+The org-export package is used by issuing a command in the shell like this:
+
+: org-export html --infile <inpath> --outfile <outpath> --css <csspath>
+
+Additionally there are options like =--bootstrap=.
+
+The present library creates the above command based on the input file (which can be the current org buffer) and also guesses the css file based on folders and files contained in the same folder as the input file.
+
+[More needed here]
+
 ** Usage
 
-1. Call Emacs command: make-and-save-export-script (H-h H-s)
+1. Call Emacs command: =make-and-save-export-script= (Keyboard shortcut: H-h H-s)
    Options for calling the command:
    1. Without prefix argument: The commands creates a script for the file of the currently active buffer in Emacs (that is the buffer which you are editing at the moment when you issue the command).
-   2. With prefix argument (C-u before calling the command): The command asks you to select the Org mode file for which it will create the script.
-2. On the terminal, call the command just created
+   2. With 1 prefix argument (C-u H-h H-s): Create a script for the last file that had a script created.
+   3. With 2 prefix arguments (C-u C-u H-h H-s): The command asks you to select the Org mode file for which it will create the script.
+2. On the terminal, call the command just created.
 
+** Name and location of generated script
 
-Details:
+1. The created script file is named after the name of the org mode source file that will be exported.  If the source file is named =example.org=, the file containing the shell script for exporting will be named =example.sh=.
+2. The script file is made executable, so that it can be run from the shell terminal.
+3. The script file is placed in the same directory as the source file.
+4. A symbolic link of the script file is placed in folder =~/.org-export/  It will be thus known to the shell as command, if ~/.org-export/ is included in the paths listed by the shell's $PATH variable.
 
-1. The script file is named after <filename>.sh where <filename
+** Contents of script
 
 
 
