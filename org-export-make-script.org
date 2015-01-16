@@ -1,22 +1,19 @@
-* Notes - TODOs
-:PROPERTIES:
-:DATE:     <2014-12-16 Tue 16:56>
-:END:
-
-Options to be covered with commands:
-
-- Select the file to make the script using =read-file-name= interactive prompt.
-- Create the script for the file of the current buffer.
-- Create the script for the last file that had already a script created.
-
-Refrain from implementing the following:
-
-- Run the script right after creating it.
-- Run the script for the file of the current buffer.
+#+TITLE: org-export enhancements
+#+INFOJS_OPT: view:showall toc:2
+#+OPTIONS: toc:2 H:5
 
 * Intro
 
-The code in this file produces a shell script file that can be used to export an Org mode file to html using the org-export package by Noah Hoffman (https://github.com/nhoffman/org-export).  The user can then call the shell script from the terminal in order to export the selected file to html.
+This library creates shell-scripts to export Org-mode files to html using the =org-export= shell command by Noah Hoffman (https://github.com/nhoffman/org-export).  The =org-export= shell command requires arguments which specify the input file, output file and css file.  The present library defines an emacs command =make-and-save-export-script= which creates a shell script that contains these arguments and a template for uploading the resulting html file via =rsync=.  The command =make-and-save-export-script= provides arguments for the following items, based on the file of the current buffer in emacs, or on a file chosen by the user:
+
+- the input file
+- output file,
+- a header file for css and
+- a header file for shared body elements.
+
+To produce the script, the user calls the command =make-and-save-export-script=.  After the script has been created, the user can call it from the terminal in order to export the selected file to html.
+
+** The org-export command
 
 The org-export package is used by issuing a command in the shell like this:
 
@@ -46,8 +43,6 @@ The present library creates the above command based on the input file (which can
 
 ** Contents of script
 
-
-
 * .el file Preamble
 
 #+BEGIN_SRC emacs-lisp
@@ -62,7 +57,7 @@ The present library creates the above command based on the input file (which can
 ;; Look for defaults.
 #+END_SRC
 
-* get arg from plists
+* get arg from plists                      :plist:
 #+BEGIN_SRC emacs-lisp
 ;;; Code:
 
@@ -98,71 +93,52 @@ but only data either either found in plist.el or given by DEFAULT.
     (or user-config (replace-regexp-in-string "%s" infile default))))
 #+END_SRC
 
-* Make config paths
+* Make config paths                        :paths:
+:PROPERTIES:
+:ID:       F72150B9-3F35-4DC7-9BAC-4DCD42DED43F
+:eval-id:  2
+:END:
+
+The following function creates a command argument pointing to CONFIG-FILE.
 
 #+BEGIN_SRC emacs-lisp
-(defun make-config-paths (infile config-file)
-  (setq infile (file-name-sans-extension (file-truename infile)))
-  (list
-   (format "%s/%s" infile config-file)
-   (format "%sconfig/%s" (file-name-directory infile) config-file)))
+  (defun make-command-arg (infile config-file found-string default-string)
+    "Create a command argument pointing to CONFIG-FILE relative to INFILE
+
+  Check for existence of CONFIG-FILE in 3 locations relateive to INFILE:
+
+  1. ./INFILE-without-extension/CONFIG-FILE
+  2. ./config/CONFIG-FILE
+  3. ../config/CONFIG-FILE
+
+  If file is found, use its relative path in FOUND-STRING, replacing $s with path.
+  If not found, return DEFAULT-STRING.
+  "
+    (let* ((base (file-name-base infile))
+           (truename (file-truename infile))
+           (this-dir (file-name-directory truename))
+           (parent-dir (file-name-directory ;; use variable for clarity
+                        (directory-file-name this-dir)))
+           (paths (list
+             (format "%s%s/%s" this-dir base config-file)
+             (format "%sconfig/%s" this-dir config-file)
+             (format "%sconfig/%s" parent-dir config-file)))
+           (found-path (-first 'file-exists-p paths)))
+      (if found-path
+          ;; (concat "./" (file-relative-name found-path this-dir))
+          (replace-regexp-in-string
+           "%s"
+           (file-relative-name found-path this-dir)
+           found-string)
+        default-string)))
 #+END_SRC
 
-* make command arg from file
-
-#+BEGIN_SRC emacs-lisp
-(defun make-command-arg-from-file (infile datafile foundstring defaultstring)
-  "Given:
-1. the names of an input file
-2. the name of a file that is to be used as part of a command
-3. A command template string
-
-Construct a command argument, depending on whether the datafile was
-found and where.
-
-Used for setting:
-1. the css stylesheet argument,
-2. --bootstrap or --incude directive,
-3. the additional header argument. "
-  (let ((path
-         (-first 'file-exists-p
-                 (make-config-paths infile datafile))))
-    (if path
-        (replace-regexp-in-string
-         "%s"
-         (concat
-          "./"
-          (file-name-nondirectory
-           (directory-file-name (file-name-directory path)))
-          "/"
-          (file-name-nondirectory path))
-         foundstring)
-      defaultstring)))
+#+BEGIN_SRC elisp
+(make-command-arg "test.org" "style.css" "--css %s" "--bootstrap")
 #+END_SRC
 
-* make command arg from file 2
-#+BEGIN_SRC emacs-lisp
-(defun make-command-arg-from-file (infile datafile foundstring defaultstring)
-  "Given:
-1. the names of an input file
-2. the name of a file that is to be used as part of a command
-3. A command template string
-
-Construct a command argument, depending on whether the datafile was
-found and where.
-
-Used for setting:
-1. the css stylesheet argument,
-2. --bootstrap or --incude directive,
-3. the additional header argument. "
-  (let ((path
-         (-first 'file-exists-p
-                 (make-config-paths infile datafile))))
-    (if path
-        (-first 'file-exists-p
-                (make-config-paths infile datafile))
-      defaultstring)))
-#+END_SRC
+#+RESULTS:
+: --css ../config/style.css
 
 * make-export-script
 #+BEGIN_SRC emacs-lisp
@@ -221,7 +197,247 @@ Used for setting:
     (dired filename))
 #+END_SRC
 
-* closing
+* Org-export enhancements
+
+The contents of the present notes may be gradually moved to different parts of the present file.
+
+** Generating scripts and auto-configure
+:PROPERTIES:
+:DATE:     [2014-12-01 Mon 16:23]
+:END:
+Custom header: ~/Dropbox/000WORKFILES/WEBSITES-ORG/config/header.html
+
+*** Basic idea: Provide defaults, override by scanning folders
+The user provides only the path of the file to be exported (interactive input/selection).  The command provides defaults for the rest of the configuration.  Additionally, these defaults can be configured through files placed in a folder named =config= or =<filename>.config= in the same directory as the file being exported (see details below).  The defaults are:
+
+|----+-------------------+--------------------------------------+----------------------------|
+| nr | item              | default                              | override                   |
+|----+-------------------+--------------------------------------+----------------------------|
+|  1 | output path       | same as input, subst. html extension | plist.el in config folder  |
+|  2 | css stylesheet    | --bootstrap                          | style.css in config folder |
+|  3 | css include       | no include                           | if not --bootstrap         |
+|  4 | additional header | only if in config folder             | if in config folder        |
+|  5 | script path       | same as input, subst. sh extension   | plist.el in config folder  |
+|  6 | rsync command     | commented template                   | plist.el in config folder  |
+|----+-------------------+--------------------------------------+----------------------------|
+#+TBLFM: $1=1+@-1::@2$1=1
+*** Interactive command: org-export-make-file-script
+
+The command creates a shell script for exporting an =org= file using the =org-export= library by Noah Hoffman. (https://github.com/nhoffman/org-export).
+*** Overriding the defaults
+
+The script looks for default-overrides in the following order:
+
+|----+-------------------+-------------------------------+--------------------+-------------+--------------------|
+| nr | item              | 1                             | 2                  | property    | default            |
+|----+-------------------+-------------------------------+--------------------+-------------+--------------------|
+|  1 | output path       | ./<filename>-config/plist.el  | ./config/plist.el  | :outpath    | ./<filename>.html  |
+|  2 | css stylesheet    | ./<filename>-config/style.css | ./config/style.css | -           | --bootstrap        |
+|  3 | css include       | include =iff= style.css found |                    | -           | no include         |
+|  4 | additional header | ./<filename>-config/head.html | ./config/head.html | -           | ""                 |
+|  5 | script path       | ./<filename>-config/plist.el  | ./config/plist.el  | :scriptpath | ./<filename>.sh    |
+|  6 | rsync command     | ./<filename>-config/plist.el  | ./config/plist.el  | :deploy     | commented template |
+|----+-------------------+-------------------------------+--------------------+-------------+--------------------|
+#+TBLFM: $1=1+@-1::@2$1=1
+
+** Test case: Two Worlds
+:PROPERTIES:
+:DATE:     <2014-12-01 Mon 15:17>
+:ID:       51E7D3C3-6AE4-4672-9D9A-A6FDEB9F8E05
+:END:
+
+Source file: /Users/iani/Dropbox/000WORKFILES/WEBSITES-ORG/two-worlds.org
+
+
+
+* 2014
+** 2014-11 November
+:PROPERTIES:
+:ID:       8AFEFB83-54A4-4B83-B403-7462D0CD28D0
+:eval-id:  3
+:END:
+*** 2014-11-24 Monday
+**** going back to orgmode for websites
+ :PROPERTIES:
+ :DATE: [2014-11-24 Mon 08:44]
+ :END:
+* 2015                    :org_export_make_script:
+#+BEGIN_SRC sh
+org-export html --infile org-export-make-script.org
+#+END_SRC
+
+#+RESULTS:
+| Using /Applications/Emacs.app/Contents/MacOS/Emacs | GNU Emacs 24.4.1 |
+
+** 2015-01 January
+*** 2015-01-15 Thursday
+**** testing example scripts from scratch :tests:
+CLOCK: [2015-01-15 Thu 11:23]--[2015-01-15 Thu 12:13] =>  0:50
+ :PROPERTIES:
+ :DATE: <2015-01-15 Thu 11:23>
+ :END:
+***** Initial tests of sh execution in babel
+#+BEGIN_SRC sh
+pwd
+#+END_SRC
+
+#+RESULTS:
+: /Users/iani/Dropbox/000WORKFILES/1_DEV_EMACS
+
+#+BEGIN_SRC sh
+echo $PATH
+#+END_SRC
+
+#+RESULTS:
+=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/local/MacGPG2/bin:/usr/texbin:/Users/iani/Dropbox/000WORKFILES/1_SCRIPTS:/Users/iani/Library/Haskell/bin:/Users/iani/Dropbox/000WORKFILES/1_SCRIPTS/shell-scratchpad:/Users/iani/.org-export:/Users/iani/Documents/Dev/Emacs/org-export/
+
+#+BEGIN_SRC sh
+which org-export
+#+END_SRC
+
+#+RESULTS:
+: /Users/iani/Documents/Dev/Emacs/org-export//org-export
+
+***** Minimal call
+
+#+BEGIN_SRC sh
+org-export html --infile org-export-make-script.org
+open org-export-make-script.html
+#+END_SRC
+
+#+RESULTS:
+| Using /Applications/Emacs.app/Contents/MacOS/Emacs | GNU Emacs 24.4.1 |
+
+
+
+***** Using bootstrap
+#+BEGIN_SRC sh
+org-export html --infile org-export-make-script.org --bootstrap
+open org-export-make-script.html
+#+END_SRC
+
+#+RESULTS:
+| Using /Applications/Emacs.app/Contents/MacOS/Emacs | GNU Emacs 24.4.1 |
+***** Embedding bootstrap *does* work *(!)*
+#+BEGIN_SRC sh
+rm org-export-make-script.html
+org-export html --infile org-export-make-script.org --bootstrap --embed-css
+open org-export-make-script.html
+#+END_SRC
+
+#+RESULTS:
+
+***** Must use localhost apache to see typekit/custom fonts
+
+#+BEGIN_SRC sh
+org-export html --infile org-export-make-script.org --outfile /Library/WebServer/Documents/index.html --bootstrap --embed-css
+open http://localhost/
+#+END_SRC
+
+#+RESULTS:
+| Using /Applications/Emacs.app/Contents/MacOS/Emacs | GNU Emacs 24.4.1 |
+
+****** Testing extra header
+
+#+BEGIN_SRC elisp
+  (defvar my-html-head nil)
+
+  (setq my-html-head nil)
+
+  (defun get-string-from-file (filePath &optional default)
+    "Return FILEPATH's file content."
+    (if (file-exists-p filePath)
+        (with-temp-buffer
+             (insert-file-contents filePath)
+             (concat "\n" (buffer-string) "\n"))
+      (or default "")))
+
+  (setq my-html-head
+        (concat
+         my-html-head
+         (get-string-from-file (file-truename "./config/header.html"))))
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+<!--
+<meta name="robots" content="noindex, nofollow, noodp, noydir">
+-->
+
+<script src="//use.typekit.net/paw4nyz.js"></script>
+<script>try{Typekit.load();}catch(e){}</script>
+<style type="text/css" media="all">
+  body {
+  /* background-color: #fff; */
+  font-family: "anonymous-pro-1","anonymous-pro-2",sans-serif;
+
+  /* font-family: "myriad-pro-1","myriad-pro-2",sans-serif; */
+
+  /* font-size: 1.5em; */
+  /*
+  font-family: "proxima-nova", "proxima-nova-1", "proxima-nova-2", "Helvetica Neue" sans-serif;
+  */
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "alverata-irregular-pe-1","alverata-irregular-pe-2",sans-serif;
+  }
+</style>
+
+#+end_example
+*** 2015-01-16 Friday
+**** trying alternate stylesheet from org-manual.css
+CLOCK: [2015-01-16 Fri 14:01]--[2015-01-16 Fri 14:45] =>  0:44
+ :PROPERTIES:
+ :DATE: <2015-01-16 Fri 14:01>
+ :END:
+
+<link rel="stylesheet" type="text/css" href="http://orgmode.org/org-manual.css" />
+***** The bootstrap original - again
+#+BEGIN_SRC sh
+org-export html --infile org-export-make-script.org --outfile /Library/WebServer/Documents/index.html --bootstrap --embed-css
+open http://localhost/
+#+END_SRC
+
+#+RESULTS:
+| Using /Applications/Emacs.app/Contents/MacOS/Emacs | GNU Emacs 24.4.1 |
+***** Using org-manual css - linked to web
+#+BEGIN_SRC sh
+org-export html --infile org-export-make-script.org --outfile /Library/WebServer/DOcuments/index.html --css http://orgmode.org/org-manual.css
+open http://localhost/
+#+END_SRC
+
+#+RESULTS:
+| Using /Applications/Emacs.app/Contents/MacOS/Emacs | GNU Emacs 24.4.1 |
+***** Using org-manual css - embedded
+
+#+BEGIN_SRC sh
+org-export html --infile org-export-make-script.org --outfile /Library/WebServer/DOcuments/index.html --css http://orgmode.org/org-manual.css
+open http://localhost/
+#+END_SRC
+
+**** dynamic header strip?
+CLOCK: [2015-01-16 Fri 15:43]--[2015-01-16 Fri 16:04] =>  0:21
+ :PROPERTIES:
+ :DATE: <2015-01-16 Fri 15:42>
+ :END:
+* Notes - TODOs                             :todo:
+:PROPERTIES:
+:DATE:     <2014-12-16 Tue 16:56>
+:END:
+
+Options to be covered with commands:
+
+- Select the file to make the script using =read-file-name= interactive prompt.
+- Create the script for the file of the current buffer.
+- Create the script for the last file that had already a script created.
+
+Refrain from implementing the following:
+
+- Run the script right after creating it.
+- Run the script for the file of the current buffer.
+
+* emacs-lisp package footer
 #+BEGIN_SRC emacs-lisp
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

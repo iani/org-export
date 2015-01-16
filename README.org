@@ -132,6 +132,7 @@ To add your own html code before the css section, put the code in a file with th
 This is useful for loading fonts, for example like this:
 
 (Typekit:)
+
 #+BEGIN_SRC html
 <script src="//use.typekit.net/paw4nyz.js"></script>
 <script>try{Typekit.load();}catch(e){}</script>

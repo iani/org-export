@@ -61,24 +61,24 @@ header. Individual blocks can be selectively evaluated using
 (if css-url
     (if (getopt "embed-css")
 	;; embed css contents in a <style> block
-	(progn
-	  (setq my-html-head
-		(format "<style type=\"text/css\">\n%s\n</style>\n"
-			(if (string-match "^http" css-url)
-			    ;; use the contents of file at path
-			    (with-current-buffer
-				(url-retrieve-synchronously css-url)
-			      (message (format "Inserting contents of %s" css-url))
-			      (buffer-string))
-			  ;; use the contents of the file at css-url
-			  (with-temp-buffer
-			    (insert-file-contents css-url)
-			    (buffer-string)))
-			)))
+        (progn
+          (setq my-html-head
+                (format "<style type=\"text/css\">\n%s\n</style>\n"
+                        (if (string-match "^http" css-url)
+                            ;; use the contents of file at path
+                            (with-current-buffer
+                                (url-retrieve-synchronously css-url)
+                              (message (format "Inserting contents of %s" css-url))
+                              (buffer-string))
+                          ;; use the contents of the file at css-url
+                          (with-temp-buffer
+                            (insert-file-contents css-url)
+                            (buffer-string)))
+                        )))
       ;; ...or add a link to the css file
       (setq my-html-head
-	    (format
-	     "<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\" />" css-url))))
+            (format
+             "<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\" />" css-url))))
 
 ;; org-mode and export configuration
 
